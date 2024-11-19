@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+# import datetime
 from Functions.flightplan_process import *
 
 st.title('My first app')
@@ -12,11 +13,22 @@ tab1,tab2, tab3,tab4  = st.tabs(['Tab 1', 'Tab 2','Tab 3','Tab 4'])
 
 with tab1:
     st.write('This is tab 1')
-    
+
+    agree = st.checkbox("I agree")
+
+    if agree:
+        st.write("Great!")
     st.write(df1)
 
 with tab2:
     st.write('This is tab 2')
+    options = st.multiselect(
+    "What are your favorite colors",
+    ["Green", "Yellow", "Red", "Blue"],
+    ["Yellow", "Red"],
+)
+
+    st.write("You selected:", options)
     df_combined = combine_flights(df1)
     st.write(df_combined)
 
