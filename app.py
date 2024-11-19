@@ -2,6 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
+st.title('My first app')
 
-teptin = st.file_uploader('chon file')
-st.write("kich thuoc tap tin la",teptin.size) 
+tab1,tab2  = st.tabs(['Tab 1', 'Tab 2'])
