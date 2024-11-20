@@ -120,7 +120,7 @@ with tab3:
     with st.expander('Gant chart preflught'):
         st.write('Gantchart')
         preflight_gantt_chart(df_day1_preflight_sgn_START_END)
-# ----
+
 with tab4:
     st.write('Transit')
 

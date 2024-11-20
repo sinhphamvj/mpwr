@@ -1,4 +1,4 @@
-import sqlite3
+import streamlit as st
 import os
 import pandas as pd
 from datetime import datetime, time, timedelta
@@ -110,6 +110,27 @@ def combine_flights(df):
     
     return result_df
 
+# Xú lý dữ liệu của STA và STD
+def adjust_sta_std_datetime(df):
+    """
+    Điều chỉnh thời gian STA dựa trên ngày và so sánh với STD.
+
+    Tham số:
+        df (pd.DataFrame): DataFrame chứa dữ liệu chuyến bay.
+
+    Trả về:
+        pd.DataFrame: DataFrame đã điều chỉnh thời gian STA.
+    """
+    # Kết hợp DATE với STA để tạo datetime
+    df['STA'] = pd.to_datetime(df['DATE'] + ' ' + df['STA'], format='%d/%m/%y %H:%M', errors='coerce')
+    df['STD'] = pd.to_datetime(df['DATE'] + ' ' + df['STD'], format='%d/%m/%y %H:%M', errors='coerce')
+
+    # Nếu STA < STD, điều chỉnh STA thuộc về ngày hôm sau
+    df.loc[df['STA'] < df['STD'], 'STA'] += pd.Timedelta(days=1)
+
+    return df
+
+
 def get_preflight(df, main_bases):
     """
     Hàm lấy dòng đầu tiên của mỗi REG và lọc các chuyến bay có DEP_1 thuộc mainbase.
@@ -128,3 +149,54 @@ def get_preflight(df, main_bases):
     filtered_df = first_rows[first_rows['DEP_1'].isin(main_bases)]
     
     return filtered_df
+
+##
+def visualize_overlap(df):
+    """
+    Tạo biểu đồ hiển thị khoảng thời gian overlap giữa các chuyến bay.
+
+    Tham số:
+        df (pd.DataFrame): DataFrame chứa dữ liệu chuyến bay với các cột 'REG', 'START', 'END'.
+
+    Trả về:
+        None: Hiển thị biểu đồ hoặc thông báo không có overlap.
+    """
+    # Bước 1: Tạo một DataFrame để lưu trữ thông tin overlap
+    overlap_data = []
+
+    # Bước 2: Lặp qua các dòng để kiểm tra overlap
+    for i in range(len(df) - 1):
+        end_time = pd.to_datetime(df.loc[i, 'END'])
+        start_time_next = pd.to_datetime(df.loc[i + 1, 'START'])
+        
+        # Kiểm tra overlap
+        if end_time > start_time_next:
+            overlap_duration = end_time - start_time_next
+            overlap_data.append({
+                'REG': df.loc[i, 'REG'],
+                'Overlap Start': start_time_next,
+                'Overlap End': end_time,
+                'Duration': overlap_duration,
+                'START': df.loc[i, 'START'],  # Thêm cột START
+                'END': df.loc[i, 'END']       # Thêm cột END
+            })
+
+    # Bước 3: Chuyển đổi overlap_data thành DataFrame
+    overlap_df = pd.DataFrame(overlap_data)
+
+    # Bước 4: Biểu diễn dữ liệu
+    if not overlap_df.empty:
+        fig = px.timeline(overlap_df, x_start='Overlap Start', x_end='Overlap End', y='REG',
+                          title='Overlap Times Between Flights',
+                          labels={'REG': 'REG', 'Overlap Start': 'Start Time', 'Overlap End': 'End Time'})
+        fig.update_yaxes(categoryorder='total ascending', showgrid=True)  # Thêm đường kẻ trục y
+        fig.update_layout(yaxis_title='REG', xaxis_title='Time')  # Tùy chỉnh tiêu đề trục
+        
+        # Thêm chú thích cho thời gian bắt đầu và kết thúc
+        for i, row in overlap_df.iterrows():
+            fig.add_annotation(x=row['START'], y=row['REG'], text=row['START'].strftime('%H:%M'), showarrow=True, ax=-20, ay=0)
+            fig.add_annotation(x=row['END'], y=row['REG'], text=row['END'].strftime('%H:%M'), showarrow=True, ax=20, ay=0)
+
+        st.plotly_chart(fig)
+    else:
+        print("Không có khoảng thời gian overlap nào.")
