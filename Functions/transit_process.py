@@ -46,7 +46,7 @@ def calculate_crs_transit_times(df):
     # Tính toán thời gian START (trước 15 phút)
     df['START'] = df['STA_1'] - pd.Timedelta(minutes=15)
 
-    # Tính toán thời gian END (START + 40 phút)
+    # Tính toán thời gian END = STD + 10 phút
     df['END'] = df['STD_2'] + pd.Timedelta(minutes=10)
 
     return df

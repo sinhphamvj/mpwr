@@ -5,6 +5,7 @@ import numpy as np
 from Functions.flightplan_process import *
 from Functions.preflight_process import *
 from Functions.transit_process import *
+from Functions.charts import *
 # Config pages
 st.set_page_config(
     page_title="MPWR APPs",
@@ -86,6 +87,8 @@ with tab2:
         with st.expander('Click to see the combined flight data day 2'):
             df_day2_combined = combine_flights(df_day2)
             st.write(df_day2_combined)
+
+# Preflight            
 with tab3:
     st.write('Preflight')
 
@@ -104,7 +107,7 @@ with tab3:
         # Rename the column STD_1 to STD
         df_day1_preflight_sgn_START_END = df_day1_preflight_sgn_START_END.rename(columns={'STD_1': 'STD'})
         # Reorder the columns as specified
-        new_column_order = ['REG', 'DATE', 'STD', 'START', 'END']
+        new_column_order = ['REG', 'DATE', 'START_SHIFT','STD', 'START', 'END']
         df_day1_preflight_sgn_START_END = df_day1_preflight_sgn_START_END[new_column_order]
 
         # Display the modified DataFrame
@@ -119,8 +122,8 @@ with tab3:
         visualize_overlap(df_day1_preflight_sgn_START_END)
     with st.expander('Gant chart preflught'):
         st.write('Gantchart')
-        preflight_gantt_chart(df_day1_preflight_sgn_START_END)
-
+        gantt_chart(df_day1_preflight_sgn_START_END)
+## Transit
 with tab4:
     st.write('Transit')
 
@@ -132,7 +135,32 @@ with tab4:
     with st.expander('CRS START - END Trasit in SGN' ):
         # Apply hàm tính Start và End time
         df_d1_transit_sgn_START_END = calculate_crs_transit_times(df_d1_transit_sgn)
+        # Drop the specified columns
+        columns_to_drop = ['Route', 'FLT_1', 'AC', 'DEP_1', 'ARR_1','ARR_2', 'STD_1', 'FLT_2', 'DEP_2', 'STA_2']
+
+        df_d1_transit_sgn_START_END = df_d1_transit_sgn_START_END.drop(columns=columns_to_drop, errors='ignore')
+        # Rename colss
+        df_d1_transit_sgn_START_END = df_d1_transit_sgn_START_END.rename(columns={'STD_2': 'STD','STA_1':'STA'})
+        # Reorder the columns as specified
+        # new_column_order = ['REG', 'DATE', 'STD','STA', 'START', 'END']
+        # df_day1_preflight_sgn_START_END = df_day1_preflight_sgn_START_END[new_column_order]
         
+        # SORT STA 
+        df_d1_transit_sgn_START_END = df_d1_transit_sgn_START_END.sort_values('STA')
+
         st.write(df_d1_transit_sgn_START_END)
+
+    with st.expander('Biểu đò phân bổ các chuyến bay transit' ):
+        st.write('Biểu đồ phân bố transit')
+        plot_flight_density(df_d1_transit_sgn_START_END)
+
+
+    with st.expander('Biểu overlap' ):
+        st.write('Biểu đồ biểu diễn overlap')
+        visualize_overlap(df_d1_transit_sgn_START_END)
+    
+    with st.expander('Gant Chart - Transit' ):
+        st.write('Biểu đồ biểu diễn overlap')
+        gantt_chart(df_d1_transit_sgn_START_END)
 with tab5:
     st.write('Nightstop')
